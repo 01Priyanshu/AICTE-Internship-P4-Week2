@@ -1,31 +1,37 @@
 import express from "express";
 import cors from "cors";
-import bodyParser from "body-parser";
+import dotenv from "dotenv";
 import { connectDB } from "./DB/Database.js";
 import transactionRoutes from "./Routers/Transactions.js";
 import userRoutes from "./Routers/userRouter.js";
 
-//app is express server
+dotenv.config(); // Load environment variables
+
 const app = express();
-const port = 4000;
+const port = process.env.PORT || 4000; // Use .env for port
 
-//database connection triggered
-connectDB();
-//we are registering cors - Cross Origin Resource Sharing - This allow our server to respond to our frontend requests
+connectDB(); // Connect to MongoDB
+
+// Middleware
 app.use(cors());
+app.use(express.json()); 
 
-// Middleware - is a logic which executes before the backend
-app.use(express.json());//{key:value}
-app.use(bodyParser.urlencoded({ extended: false }));//name=hmg
-
-// Adding 2 routes
-app.use("/api/v1", transactionRoutes);//all end points related to credit/debit transactions
-app.use("/api/auth", userRoutes);//this all end points related to users -> login, signup
+// Routes
+app.use("/api/v1", transactionRoutes);
+app.use("/api/auth", userRoutes);
 
 app.get("/", (req, res) => {
   res.send("FinManager Server is working");
 });
 
-app.listen(port, () => {
-  console.log(`Server is listening on http://localhost:${port}`);
+// Global Error Handler
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ message: "Internal Server Error" });
 });
+
+// Start Server
+app.listen(port, () => {
+  console.log(`Server is running on port ${port}`);
+});
+
